@@ -39,8 +39,9 @@ Rates are editable in `config/tarifas.json` without touching the code.
 The project follows a layered architecture:
 
 - `src/domain/` — core business logic (`Carrera`, `Tarifa`), independent of any interface or storage detail
-- `src/infrastructure/` — technical support (logging, persistence, authentication)
-- `src/interfaces/` — entry points (`cli.py` for the command line, `web.py` for the Flask web/API app)
+- `src/application/` — use cases (`ServicioCarrera`): start a trip, toggle its state, end it and save it to the history. It holds the active trip and orchestrates the domain and the infrastructure, so both interfaces share the same rules
+- `src/infrastructure/` — technical support (logging, persistence, authentication, fare configuration)
+- `src/interfaces/` — thin entry points that only read user input and show results (`cli.py` for the command line, `web.py` for the Flask web/API app)
 
 ## 🛠️ Technical Decisions
 
@@ -61,13 +62,16 @@ taxitech/
 ├── logs/
 │ └── taximetro.log # Application logs
 ├── src/
+│ ├── application/
+│ │ └── servicio_carrera.py # Trip use cases shared by CLI and web
 │ ├── domain/
 │ │ ├── carrera.py # Trip logic
 │ │ └── tarifa.py # Fare calculation logic
 │ ├── infrastructure/
 │ │ ├── auth.py # Salted PBKDF2 password hashing and verification
 │ │ ├── historial.py # Trip history persistence
-│ │ └── logger.py # Logging configuration
+│ │ ├── logger.py # Logging configuration
+│ │ └── tarifas.py # Loads fares from config/tarifas.json
 │ └── interfaces/
 │ ├── cli.py # Command-line interface
 │ └── web.py # Web app + REST API (Flask)
@@ -159,10 +163,11 @@ The web app signs its session cookie with a secret key that is never stored in t
 pytest
 ```
 
-38 tests, all isolated from real data (temporary SQLite database, temporary credentials file and a controllable clock):
+44 tests, all isolated from real data (temporary SQLite database, temporary credentials file and a controllable clock):
 
 - **Fares** (`test_tarifa.py`): `Tarifa.calcular_coste` across normal, edge and zero-rate cases.
 - **Authentication** (`test_auth.py`): salted PBKDF2 hashing, correct and wrong passwords, missing or old-format credentials file.
+- **Use cases** (`test_servicio_carrera.py`): trip lifecycle and error cases in `ServicioCarrera`, independent of any interface.
 - **REST API** (`test_api.py`): login and logout, `401` on every protected endpoint without a session, trip lifecycle (start, toggle state, live total, end), error cases and a full trip saved to the history.
 - **Persistence** (`test_historial.py`): table creation, saving and reading trips, filtering by date, rounding and trips without an end time.
 

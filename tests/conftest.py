@@ -5,6 +5,7 @@ import pytest
 
 import src.infrastructure.historial as historial
 import src.interfaces.web as web
+from src.application.servicio_carrera import ServicioCarrera
 from src.domain.tarifa import Tarifa
 from src.infrastructure import auth
 
@@ -49,8 +50,10 @@ def cliente(tmp_path, monkeypatch, bd_temporal):
     monkeypatch.setattr(
         web, "verificar_password", lambda p: auth.verificar_password(p, str(ruta_security))
     )
-    monkeypatch.setattr(web, "tarifa", Tarifa(0.02, 0.05))
-    monkeypatch.setattr(web, "carrera_activa", None)
+    # Servicio nuevo en cada test: tarifa fija y sin carrera activa heredada.
+    monkeypatch.setattr(
+        web, "servicio", ServicioCarrera(Tarifa(0.02, 0.05), logging.getLogger("taximetro-tests"))
+    )
     monkeypatch.setattr(web, "logger", logging.getLogger("taximetro-tests"))
 
     web.app.config["TESTING"] = True
