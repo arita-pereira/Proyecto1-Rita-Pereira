@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, redirect, url_for, render_template, session
 import os
+import secrets
 from src.domain.carrera import Carrera
 from src.interfaces.cli import cargar_tarifa
 from src.infrastructure.historial import guardar_carrera, obtener_historial_dia
@@ -8,10 +9,19 @@ from src.infrastructure.logger import configurar_logger
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 app = Flask(__name__, template_folder=os.path.join(BASE_DIR, "templates"))
-app.secret_key = "redhead"
 
 tarifa = cargar_tarifa()
 logger = configurar_logger()
+
+# La clave que firma la cookie de sesión no se guarda en el código: si estuviera en el
+# repositorio, cualquiera podría falsificar una sesión autenticada.
+clave_secreta = os.environ.get("TAXITECH_SECRET_KEY")
+if not clave_secreta:
+    clave_secreta = secrets.token_hex(32)
+    logger.warning("TAXITECH_SECRET_KEY no definida: se usa una clave aleatoria "
+                   "y las sesiones se cerrarán al reiniciar el servidor.")
+app.secret_key = clave_secreta
+
 logger.info("Aplicación web iniciada.")
 carrera_activa = None
 
@@ -95,4 +105,6 @@ def logout():
     return redirect(url_for("login"))
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # El modo debug (recarga automática y consola interactiva) solo se activa a propósito.
+    debug = os.environ.get("TAXITECH_DEBUG") == "1"
+    app.run(host="0.0.0.0", port=5000, debug=debug)
