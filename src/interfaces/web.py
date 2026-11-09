@@ -6,7 +6,7 @@ from src.application.servicio_carrera import (
     ServicioCarrera,
     SinCarreraActivaError,
 )
-from src.infrastructure.auth import verificar_password
+from src.infrastructure.auth import ConfiguracionSeguridadError, verificar_password
 from src.infrastructure.logger import configurar_logger
 from src.infrastructure.tarifas import cargar_tarifa
 
@@ -37,7 +37,16 @@ def login():
     if request.method == "POST":
         password = request.form.get("password")
         nombre = request.form.get("nombre")
-        if verificar_password(password):
+        try:
+            acceso_correcto = verificar_password(password)
+        except ConfiguracionSeguridadError as error:
+            logger.error(f"Configuración de seguridad no válida: {error}")
+            return render_template(
+                "login.html",
+                error="La contraseña de acceso no está configurada. "
+                      "Ejecuta: python -m scripts.set_password",
+            ), 500
+        if acceso_correcto:
             session["autenticado"] = True
             session["nombre"] = nombre
             logger.info(f"Acceso concedido a {nombre}.")
