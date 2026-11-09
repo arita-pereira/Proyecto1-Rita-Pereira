@@ -18,7 +18,7 @@ TaxiTech Solutions has used physical Hale T200 taximeters since 2018. The manufa
 - Configurable tariffs via a JSON file, no code changes required
 - Trip history persisted in a SQLite database for data integrity and structured queries
 - Daily trip history with total earnings summary
-- Password-protected access with hashed credentials (no plaintext passwords)
+- Password-protected access with salted PBKDF2 hashes (no plaintext passwords)
 - Screen lock feature, so passengers cannot tamper with the meter mid-ride
 - Two interfaces: a command-line app for the driver's console and a mobile/tablet-friendly web app
 - REST API backing the web app, reusable by any future client
@@ -54,7 +54,8 @@ The project follows a layered architecture:
 taxitech/
 ├── config/
 │ ├── tarifas.json # Fare configuration
-│ └── security.json # Hashed access password
+│ ├── security.example.json # Format of the (git-ignored) credentials file
+│ └── security.json # Salted password hash, created locally (not versioned)
 ├── data/
 │ └── historial.db # Trip history (SQLite database)
 ├── logs/
@@ -64,7 +65,7 @@ taxitech/
 │ │ ├── carrera.py # Trip logic
 │ │ └── tarifa.py # Fare calculation logic
 │ ├── infrastructure/
-│ │ ├── auth.py # Password verification
+│ │ ├── auth.py # Salted PBKDF2 password hashing and verification
 │ │ ├── historial.py # Trip history persistence
 │ │ └── logger.py # Logging configuration
 │ └── interfaces/
@@ -96,10 +97,10 @@ pip install -r requirements.txt
 Run the entire application with a single command:
 
 ​```
-pip install -r requirements.txt && python -m src.interfaces.web
+pip install -r requirements.txt && python -m scripts.set_password && python -m src.interfaces.web
 ​```
 
-The server starts at `http://127.0.0.1:5000`. No manual environment configuration is needed beyond having Python and pip installed. Trip data persists in `data/historial.db` (SQLite) across restarts.
+The `set_password` step asks you to choose an access password the first time (it is stored as a salted hash in a git-ignored file); skip it on later runs. The server starts at `http://127.0.0.1:5000`. No other manual configuration is needed beyond having Python and pip installed. Trip data persists in `data/historial.db` (SQLite) across restarts.
 
 ## ▶️ Usage
 
@@ -136,7 +137,15 @@ All endpoints require an authenticated session (login via `/login` first).
 
 ## 🔒 Security
 
-Access is protected by a password, stored as a SHA-256 hash in `config/security.json` — no plaintext credentials are stored anywhere in the project.
+Access is protected by a password. It is never stored in plaintext: `config/security.json` only holds a random salt and a PBKDF2-HMAC-SHA256 hash (600,000 iterations), and passwords are compared with `hmac.compare_digest`.
+
+That file is git-ignored, so credentials never reach the repository. Create your own password once after cloning:
+
+```
+python -m scripts.set_password
+```
+
+The script asks for the password without echoing it. See `config/security.example.json` for the file format.
 
 ## ✅ Testing
 ```
