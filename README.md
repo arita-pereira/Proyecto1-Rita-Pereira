@@ -6,7 +6,7 @@ A software prototype that replaces physical taxi meters with a fully digital sys
 ![Estado](https://img.shields.io/badge/Estado-En%20revisi%C3%B3n%20final-2dd4bf?style=flat&labelColor=333)
 ![Prioridad](https://img.shields.io/badge/Prioridad-Alta-e63946?style=flat&labelColor=333)
 
-🔗 [GitHub Repository](https://github.com/IA-P1-BCN/https://github.com/IA-P1-BCN/Proyecto1-Rita-Pereira) · [Kanban Board](https://github.com/orgs/IA-P1-BCN/projects/3)
+🔗 [GitHub Repository](https://github.com/arita-pereira/Proyecto1-Rita-Pereira) · [Kanban Board](https://github.com/users/arita-pereira/projects/4)
 
 ## 📋 Project Context
 
