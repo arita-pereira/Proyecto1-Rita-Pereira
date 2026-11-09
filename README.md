@@ -147,6 +147,13 @@ python -m scripts.set_password
 
 The script asks for the password without echoing it. See `config/security.example.json` for the file format.
 
+The web app signs its session cookie with a secret key that is never stored in the code. Optional environment variables:
+
+| Variable | Purpose |
+|----------|---------|
+| `TAXITECH_SECRET_KEY` | Key that signs the session cookie. If unset, a random key is generated at startup, so sessions end when the server restarts. Set it to keep sessions across restarts. |
+| `TAXITECH_DEBUG` | Set to `1` to enable Flask debug mode. Off by default; never enable it on a shared network. |
+
 ## ✅ Testing
 ```
 pytest
