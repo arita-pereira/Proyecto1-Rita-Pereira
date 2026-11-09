@@ -1,17 +1,12 @@
-from src.domain.carrera import Carrera
-from src.domain.tarifa import Tarifa
-from src.infrastructure.historial import guardar_carrera, obtener_historial_dia
-from src.infrastructure.logger import configurar_logger
+from src.application.servicio_carrera import (
+    CarreraYaActivaError,
+    ServicioCarrera,
+    SinCarreraActivaError,
+)
 from src.infrastructure.auth import verificar_password
-import json
+from src.infrastructure.logger import configurar_logger
+from src.infrastructure.tarifas import cargar_tarifa
 
-
-def cargar_tarifa():
-    with open("config/tarifas.json", "r") as f:
-        datos = json.load(f)
-
-    tarifa = Tarifa(**datos)
-    return tarifa
 
 def mostrar_menu():
     print("\n--- TAXÍMETRO DIGITAL ---")
@@ -34,9 +29,8 @@ def pedir_password(logger):
             logger.warning("Intento de acceso con contraseña incorrecta.")
 
 def main():
-    tarifa = cargar_tarifa()
-    carrera_activa = None
     logger = configurar_logger()
+    servicio = ServicioCarrera(cargar_tarifa(), logger)
     logger.info("Aplicación iniciada por el usuario.")
     pedir_password(logger)
 
@@ -44,60 +38,44 @@ def main():
         mostrar_menu()
         opcion = input("Elige una opción: ")
 
-        if opcion == "1":
-            if carrera_activa is not None:
-                print("Ya hay una carrera en curso.")
-                logger.warning("Ya hay una carrera en curso.")
-            else:
-                carrera_activa = Carrera()
-                print("Carrera iniciada. Estado: parado")
-                logger.info("Carrera iniciada. Estado: parado")
+        try:
+            if opcion == "1":
+                estado = servicio.iniciar()
+                print(f"Carrera iniciada. Estado: {estado}")
 
-        elif opcion == "2":
-            if carrera_activa is None:
-                print("No hay ninguna carrera activa.")
-                logger.warning("No hay ninguna carrera activa.")
-            else:
-                nuevo_estado = "movimiento" if carrera_activa.estado_actual == "parado" else "parado"
-                carrera_activa.cambiar_estado(nuevo_estado)
-                print(f"Nuevo estado: {nuevo_estado}")
-                logger.info(f"Cambio de estado a: {nuevo_estado}")
+            elif opcion == "2":
+                estado = servicio.alternar_estado()
+                print(f"Nuevo estado: {estado}")
 
-
-        elif opcion == "3":
-            if carrera_activa is None:
-                print("No hay ninguna carrera activa.")
-                logger.warning("No hay ninguna carrera activa.")
-            else:
-                carrera_activa.finalizar_carrera()
-                total = carrera_activa.calcular_total(tarifa)
+            elif opcion == "3":
+                total = servicio.finalizar()
                 print(f"Carrera finalizada. Total a cobrar: {total:.2f} €")
-                logger.info(f"Carrera finalizada. Total a cobrar: {total:.2f} €")
-                guardar_carrera(carrera_activa, tarifa)
-                carrera_activa = None
 
-        elif opcion == "4":
-            historial = obtener_historial_dia()
-            if not historial:
-                print("No hay carreras registradas hoy.")
-            else:
-                print(f"\n--- HISTÓRICO DE HOY ({len(historial)} carreras) ---")
-                for carrera in historial:
-                    print(f"{carrera['hora_inicio']} → {carrera['hora_fin']}: {carrera['total']} €")
+            elif opcion == "4":
+                historial = servicio.historial_del_dia()
+                if not historial:
+                    print("No hay carreras registradas hoy.")
+                else:
+                    print(f"\n--- HISTÓRICO DE HOY ({len(historial)} carreras) ---")
+                    for carrera in historial:
+                        print(f"{carrera['hora_inicio']} → {carrera['hora_fin']}: {carrera['total']} €")
 
-        elif opcion == "6":
+            elif opcion == "6":
                 print("Aplicación bloqueada.")
                 logger.info("Aplicación bloqueada por el usuario.")
                 pedir_password(logger)
 
-        elif opcion == "5":
-            print("Cerrando aplicación. Hasta luego.")
-            logger.info("Aplicación cerrada por el usuario.")
-            break
+            elif opcion == "5":
+                print("Cerrando aplicación. Hasta luego.")
+                logger.info("Aplicación cerrada por el usuario.")
+                break
 
-        else:
-            print("Opción no válida, intenta de nuevo.")
-            logger.warning("Opción no válida seleccionada.")
+            else:
+                print("Opción no válida, intenta de nuevo.")
+                logger.warning("Opción no válida seleccionada.")
+
+        except (CarreraYaActivaError, SinCarreraActivaError) as error:
+            print(error)
 
 if __name__ == "__main__":
     main()
