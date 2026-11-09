@@ -159,7 +159,12 @@ The web app signs its session cookie with a secret key that is never stored in t
 pytest
 ```
 
-Covers the fare calculation logic (`Tarifa.calcular_coste`) across normal, edge, and zero-rate cases.
+38 tests, all isolated from real data (temporary SQLite database, temporary credentials file and a controllable clock):
+
+- **Fares** (`test_tarifa.py`): `Tarifa.calcular_coste` across normal, edge and zero-rate cases.
+- **Authentication** (`test_auth.py`): salted PBKDF2 hashing, correct and wrong passwords, missing or old-format credentials file.
+- **REST API** (`test_api.py`): login and logout, `401` on every protected endpoint without a session, trip lifecycle (start, toggle state, live total, end), error cases and a full trip saved to the history.
+- **Persistence** (`test_historial.py`): table creation, saving and reading trips, filtering by date, rounding and trips without an end time.
 
 ## 📝 Logging
 
