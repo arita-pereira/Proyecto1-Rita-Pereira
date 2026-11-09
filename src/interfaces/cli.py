@@ -3,7 +3,9 @@ from src.application.servicio_carrera import (
     ServicioCarrera,
     SinCarreraActivaError,
 )
-from src.infrastructure.auth import verificar_password
+import sys
+
+from src.infrastructure.auth import ConfiguracionSeguridadError, cargar_registro, verificar_password
 from src.infrastructure.logger import configurar_logger
 from src.infrastructure.tarifas import cargar_tarifa
 
@@ -32,6 +34,15 @@ def main():
     logger = configurar_logger()
     servicio = ServicioCarrera(cargar_tarifa(), logger)
     logger.info("Aplicación iniciada por el usuario.")
+
+    # Sin contraseña configurada no se puede entrar: avisar con un mensaje claro y salir.
+    try:
+        cargar_registro()
+    except ConfiguracionSeguridadError as error:
+        logger.error(f"Configuración de seguridad no válida: {error}")
+        print(error)
+        sys.exit(1)
+
     pedir_password(logger)
 
     while True:

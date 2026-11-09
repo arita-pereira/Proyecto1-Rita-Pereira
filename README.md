@@ -163,12 +163,13 @@ The web app signs its session cookie with a secret key that is never stored in t
 pytest
 ```
 
-44 tests, all isolated from real data (temporary SQLite database, temporary credentials file and a controllable clock):
+46 tests, all isolated from real data (temporary SQLite database, temporary credentials file and a controllable clock):
 
 - **Fares** (`test_tarifa.py`): `Tarifa.calcular_coste` across normal, edge and zero-rate cases.
 - **Authentication** (`test_auth.py`): salted PBKDF2 hashing, correct and wrong passwords, missing or old-format credentials file.
 - **Use cases** (`test_servicio_carrera.py`): trip lifecycle and error cases in `ServicioCarrera`, independent of any interface.
-- **REST API** (`test_api.py`): login and logout, `401` on every protected endpoint without a session, trip lifecycle (start, toggle state, live total, end), error cases and a full trip saved to the history.
+- **REST API** (`test_api.py`): login and logout, `401` on every protected endpoint without a session, trip lifecycle (start, toggle state, live total, end), error cases, a full trip saved to the history and a clear error when no password is configured.
+- **CLI** (`test_cli.py`): the command line exits with a clear message when no password is configured.
 - **Persistence** (`test_historial.py`): table creation, saving and reading trips, filtering by date, rounding and trips without an end time.
 
 ## 📝 Logging

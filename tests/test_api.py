@@ -115,3 +115,15 @@ def test_se_pueden_encadenar_carreras(cliente_autenticado, reloj):
         cliente_autenticado.post("/api/carrera/finalizar")
     historial = cliente_autenticado.get("/api/historial").get_json()
     assert len(historial) == 2
+
+
+def test_login_sin_contrasena_configurada_muestra_mensaje_claro(cliente, monkeypatch, tmp_path):
+    import src.interfaces.web as web
+    from src.infrastructure import auth
+
+    ruta_inexistente = str(tmp_path / "no-existe.json")
+    monkeypatch.setattr(web, "verificar_password", lambda p: auth.verificar_password(p, ruta_inexistente))
+
+    respuesta = cliente.post("/login", data={"password": "lo-que-sea", "nombre": "Rita"})
+    assert respuesta.status_code == 500
+    assert "python -m scripts.set_password" in respuesta.get_data(as_text=True)
