@@ -19,3 +19,6 @@ logs/*.log
 # Historial de carreras (si no quieres versionarlo) 
 data/historial.db
 data/historial.json
+
+# Credenciales (nunca versionar)
+config/security.json
